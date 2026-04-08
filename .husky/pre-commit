@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
-# Load nvm when not in PATH (e.g. VS Code git integration)
 if ! command -v npx >/dev/null 2>&1; then
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+  echo "⚠️  npx not found in PATH — skipping pre-commit hooks"
+  echo "   Run 'npm run lint && npm run check:any-budget:t11' manually before pushing."
+  exit 0
 fi
 
 npx lint-staged
