@@ -1,3 +1,10 @@
+#!/usr/bin/env sh
+# Load nvm when not in PATH (e.g. VS Code git integration)
+if ! command -v npx >/dev/null 2>&1; then
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+fi
+
 npx lint-staged
 node scripts/check-docs-sync.mjs
 npm run check:any-budget:t11
