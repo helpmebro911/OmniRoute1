@@ -58,6 +58,7 @@ export const createProviderSchema = z.object({
 
 export const createKeySchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
+  noLog: z.boolean().optional(),
 });
 
 // ──── Combo Schemas ────
@@ -95,6 +96,7 @@ const comboStrategySchema = z.enum([
   "p2c",
   "auto",
   "lkgp",
+  "context-optimized",
 ]);
 
 const scoringWeightsSchema = z

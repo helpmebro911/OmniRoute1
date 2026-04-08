@@ -17,6 +17,7 @@ import { selectProvider as selectAutoProvider } from "./autoCombo/engine.ts";
 import { selectWithStrategy } from "./autoCombo/routerStrategy.ts";
 import { DEFAULT_WEIGHTS, scorePool } from "./autoCombo/scoring.ts";
 import { supportsToolCalling } from "./modelCapabilities.ts";
+import { getModelContextLimit } from "../../src/lib/modelsDevSync";
 
 // Status codes that should mark semaphore + record circuit breaker failures
 const TRANSIENT_FOR_BREAKER = [429, 502, 503, 504];
@@ -28,6 +29,7 @@ const COMBO_BAD_REQUEST_FALLBACK_PATTERNS = [
   /no such tool available/i,
   /unsupported content part type/i,
   /tool(?:_call|_use)? .* not (?:available|found)/i,
+  /third-party apps/i,
 ];
 
 const MAX_COMBO_DEPTH = 3;
@@ -307,6 +309,24 @@ function sortModelsByUsage(models, comboName) {
   }));
   withUsage.sort((a, b) => a.requests - b.requests);
   return withUsage.map((e) => e.modelStr);
+}
+
+/**
+ * Sort models by context window size (largest first) for context-optimized strategy.
+ * Uses models.dev synced capabilities to get context limits.
+ * @param {Array<string>} models - Model strings in "provider/model" format
+ * @returns {Array<string>} Sorted model strings (largest context first)
+ */
+function sortModelsByContextSize(models) {
+  const withContext = models.map((modelStr) => {
+    const parsed = parseModel(modelStr);
+    const provider = parsed.provider || parsed.providerAlias || "unknown";
+    const model = parsed.model || modelStr;
+    const limit = getModelContextLimit(provider, model);
+    return { modelStr, context: limit ?? 0 };
+  });
+  withContext.sort((a, b) => b.context - a.context);
+  return withContext.map((e) => e.modelStr);
 }
 
 function toTextContent(content) {
@@ -599,7 +619,7 @@ export async function handleComboChat({
               // Inject tag at the beginning of the first content value
               const injected = text.replace(
                 /"content":"([^"]+)/,
-                `"content":"${tagContent.replace(/"/g, '\\"')}$1`
+                `"content":"${tagContent.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}$1`
               );
               tagInjected = true;
               controller.enqueue(encoder.encode(injected));
@@ -908,6 +928,9 @@ export async function handleComboChat({
   } else if (strategy === "cost-optimized") {
     orderedModels = await sortModelsByCost(orderedModels);
     log.info("COMBO", `Cost-optimized ordering: cheapest first (${orderedModels[0]})`);
+  } else if (strategy === "context-optimized") {
+    orderedModels = sortModelsByContextSize(orderedModels);
+    log.info("COMBO", `Context-optimized ordering: largest first (${orderedModels[0]})`);
   }
 
   let lastError = null;

@@ -643,6 +643,10 @@ export function startPeriodicSync(intervalMs?: number): void {
         console.warn("[MODELS_DEV] Periodic sync error:", err instanceof Error ? err.message : err);
       });
   }, interval);
+
+  if (syncTimer && typeof syncTimer === "object" && "unref" in syncTimer) {
+    (syncTimer as { unref?: () => void }).unref?.();
+  }
 }
 
 /**
@@ -691,4 +695,13 @@ export async function initModelsDevSync(): Promise<void> {
 
   const interval = settings.modelsDevSyncInterval as number | undefined;
   startPeriodicSync(interval);
+}
+
+/**
+ * Get context window limit for a specific model from synced capabilities.
+ * Returns null if not available.
+ */
+export function getModelContextLimit(provider: string, modelId: string): number | null {
+  const caps = getSyncedCapabilities(provider, modelId);
+  return caps[provider]?.[modelId]?.limit_context ?? null;
 }

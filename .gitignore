@@ -21,9 +21,11 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 .data/
+.next-playwright/
 
 # testing
 coverage/
+coverage**
 
 # next.js
 .next/
@@ -118,6 +120,7 @@ security-analysis/
 clipr/
 app.log
 *.tgz
+.gh-discussions.json
 
 # Backup directories
 app.__qa_backup/
@@ -159,3 +162,6 @@ typescript
 
 # Superpowers plans/specs (internal tooling, not project code)
 docs/superpowers/
+
+# GitNexus local index
+.gitnexus

@@ -1,11 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const {
-  compressContext,
-  estimateTokens,
-  getTokenLimit,
-} = await import("../../open-sse/services/contextManager.ts");
+const { compressContext, estimateTokens, getTokenLimit } =
+  await import("../../open-sse/services/contextManager.ts");
 
 // ─── estimateTokens ─────────────────────────────────────────────────────────
 

@@ -104,17 +104,16 @@ test("buildClaudeCodeCompatibleRequest keeps prior role history while dropping t
       { role: "user", text: "u2" },
     ]
   );
-  assert.deepEqual(payload.messages[0].content.at(-1).cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.messages[1].content.at(-1).cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.messages[2].content.at(-1).cache_control, { type: "ephemeral" });
+  assert.equal(payload.messages[0].content.at(-1).cache_control, undefined);
+  assert.equal(payload.messages[1].content.at(-1).cache_control, undefined);
+  assert.equal(payload.messages[2].content.at(-1).cache_control, undefined);
   assert.equal(payload.system.length, 4);
   assert.equal(payload.system.at(-1).text, "sys");
-  assert.deepEqual(payload.system[1].cache_control, { type: "ephemeral", ttl: "1h" });
-  assert.deepEqual(payload.system[2].cache_control, { type: "ephemeral", ttl: "1h" });
-  assert.deepEqual(payload.system[3].cache_control, { type: "ephemeral", ttl: "1h" });
+  assert.equal(payload.system[1].cache_control, undefined);
+  assert.equal(payload.system[2].cache_control, undefined);
+  assert.equal(payload.system[3].cache_control, undefined);
   assert.equal(payload.tools.length, 1);
-  const { cache_control, ...toolWithoutCacheControl } = payload.tools[0];
-  assert.deepEqual(toolWithoutCacheControl, {
+  assert.deepEqual(payload.tools[0], {
     name: "lookup_weather",
     description: "Fetch weather",
     input_schema: {
@@ -125,7 +124,6 @@ test("buildClaudeCodeCompatibleRequest keeps prior role history while dropping t
       required: ["city"],
     },
   });
-  assert.deepEqual(payload.tools[0].cache_control, { type: "ephemeral", ttl: "1h" });
   assert.deepEqual(payload.tool_choice, { type: "any" });
   assert.equal(payload.context_management.edits[0].type, "clear_thinking_20251015");
   assert.equal(JSON.parse(payload.metadata.user_id).session_id, "session-1");
@@ -185,11 +183,11 @@ test("buildClaudeCodeCompatibleRequest preserves Claude cache markers when reque
     type: "ephemeral",
     ttl: "10m",
   });
-  assert.deepEqual(payload.messages[2].content[0].cache_control, { type: "ephemeral" });
+  assert.equal(payload.messages[2].content[0].cache_control, undefined);
   assert.deepEqual(payload.tools[0].cache_control, { type: "ephemeral", ttl: "30m" });
 });
 
-test("buildClaudeCodeCompatibleRequest supplements missing Claude cache markers in preserve mode", () => {
+test("buildClaudeCodeCompatibleRequest does not supplement missing Claude cache markers in preserve mode", () => {
   const payload = buildClaudeCodeCompatibleRequest({
     sourceBody: {
       max_tokens: 64,
@@ -230,14 +228,14 @@ test("buildClaudeCodeCompatibleRequest supplements missing Claude cache markers 
     preserveCacheControl: true,
   });
 
-  assert.deepEqual(payload.messages[0].content[0].cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.messages[1].content[0].cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.messages[2].content[0].cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.system.at(-1).cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.tools[0].cache_control, { type: "ephemeral", ttl: "1h" });
+  assert.equal(payload.messages[0].content[0].cache_control, undefined);
+  assert.equal(payload.messages[1].content[0].cache_control, undefined);
+  assert.equal(payload.messages[2].content[0].cache_control, undefined);
+  assert.equal(payload.system.at(-1).cache_control, undefined);
+  assert.equal(payload.tools[0].cache_control, undefined);
 });
 
-test("buildClaudeCodeCompatibleRequest upgrades built-in system cache markers when preserved system uses 1h", () => {
+test("buildClaudeCodeCompatibleRequest keeps built-in system blocks untagged when preserved system uses 1h", () => {
   const payload = buildClaudeCodeCompatibleRequest({
     sourceBody: {
       max_tokens: 64,
@@ -259,13 +257,13 @@ test("buildClaudeCodeCompatibleRequest upgrades built-in system cache markers wh
     preserveCacheControl: true,
   });
 
-  assert.deepEqual(payload.system[1].cache_control, { type: "ephemeral", ttl: "1h" });
-  assert.deepEqual(payload.system[2].cache_control, { type: "ephemeral", ttl: "1h" });
-  assert.deepEqual(payload.system[3].cache_control, { type: "ephemeral", ttl: "1h" });
+  assert.equal(payload.system[1].cache_control, undefined);
+  assert.equal(payload.system[2].cache_control, undefined);
+  assert.deepEqual(payload.system[3].cache_control, { type: "ephemeral" });
   assert.deepEqual(payload.system[4].cache_control, { type: "ephemeral", ttl: "1h" });
 });
 
-test("buildClaudeCodeCompatibleRequest marks final user turn and 1h system cache in non-preserve mode", () => {
+test("buildClaudeCodeCompatibleRequest does not add cache markers in non-preserve mode", () => {
   const largeUserPrompt = Array.from(
     { length: 200 },
     (_, index) => `Context line ${index + 1}: repeated stable context for cache testing.`
@@ -289,12 +287,12 @@ test("buildClaudeCodeCompatibleRequest marks final user turn and 1h system cache
     preserveCacheControl: false,
   });
 
-  assert.deepEqual(payload.system[1].cache_control, { type: "ephemeral", ttl: "1h" });
-  assert.deepEqual(payload.system[2].cache_control, { type: "ephemeral", ttl: "1h" });
-  assert.deepEqual(payload.system[3].cache_control, { type: "ephemeral", ttl: "1h" });
-  assert.deepEqual(payload.messages[0].content[0].cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.messages[1].content[0].cache_control, { type: "ephemeral" });
-  assert.deepEqual(payload.messages[2].content[0].cache_control, { type: "ephemeral" });
+  assert.equal(payload.system[1].cache_control, undefined);
+  assert.equal(payload.system[2].cache_control, undefined);
+  assert.equal(payload.system[3].cache_control, undefined);
+  assert.equal(payload.messages[0].content[0].cache_control, undefined);
+  assert.equal(payload.messages[1].content[0].cache_control, undefined);
+  assert.equal(payload.messages[2].content[0].cache_control, undefined);
 });
 
 test("buildClaudeCodeCompatibleRequest falls back to a user turn when the source only has assistant/model text", () => {
@@ -312,7 +310,7 @@ test("buildClaudeCodeCompatibleRequest falls back to a user turn when the source
   assert.deepEqual(payload.messages, [
     {
       role: "user",
-      content: [{ type: "text", text: "draft", cache_control: { type: "ephemeral" } }],
+      content: [{ type: "text", text: "draft" }],
     },
   ]);
 });
@@ -354,7 +352,7 @@ test("buildClaudeCodeCompatibleRequest omits auto tool_choice while preserving t
   });
 
   assert.equal(payload.tools.length, 1);
-  assert.deepEqual(payload.tools[0].cache_control, { type: "ephemeral", ttl: "1h" });
+  assert.equal(payload.tools[0].cache_control, undefined);
   assert.equal(payload.tool_choice, undefined);
 });
 
@@ -522,6 +520,16 @@ test("handleChatCore forces upstream streaming for CC compatible while returning
   assert.equal(calls.length, 1);
   assert.equal(calls[0].headers.Accept, "text/event-stream");
   assert.equal(calls[0].body.stream, true);
+  assert.equal(
+    calls[0].body.system.some((block) => block.cache_control !== undefined),
+    false
+  );
+  assert.equal(
+    calls[0].body.messages.some((message) =>
+      message.content.some((block) => block.cache_control !== undefined)
+    ),
+    false
+  );
 
   const payload = await result.response.json();
   assert.equal(payload.choices[0].message.content, "Hello from CC");
@@ -530,7 +538,7 @@ test("handleChatCore forces upstream streaming for CC compatible while returning
   assert.equal(payload.usage.completion_tokens, 5);
 });
 
-test("handleChatCore applies OmniRoute-managed cache strategy for CC-compatible requests in auto mode", async () => {
+test("handleChatCore preserves client cache markers for Claude Code requests to CC-compatible providers", async () => {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     calls.push({
@@ -635,20 +643,19 @@ test("handleChatCore applies OmniRoute-managed cache strategy for CC-compatible 
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0].body.system.at(-1).cache_control, {
     type: "ephemeral",
-    ttl: "1h",
+    ttl: "5m",
   });
   assert.deepEqual(calls[0].body.messages[0].content[0].cache_control, {
     type: "ephemeral",
   });
   assert.deepEqual(calls[0].body.messages[1].content[0].cache_control, {
     type: "ephemeral",
+    ttl: "10m",
   });
-  assert.deepEqual(calls[0].body.messages[2].content[0].cache_control, {
-    type: "ephemeral",
-  });
+  assert.equal(calls[0].body.messages[2].content[0].cache_control, undefined);
   assert.deepEqual(calls[0].body.tools[0].cache_control, {
     type: "ephemeral",
-    ttl: "1h",
+    ttl: "30m",
   });
 });
 
@@ -716,6 +723,263 @@ test("provider-nodes validate route rejects CC mode when feature flag is disable
   );
 
   assert.equal(response.status, 403);
+});
+
+test("provider-nodes validate route rejects invalid JSON and schema errors", async () => {
+  const invalidJsonResponse = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{",
+    })
+  );
+
+  assert.equal(invalidJsonResponse.status, 400);
+  assert.deepEqual(await invalidJsonResponse.json(), {
+    error: {
+      message: "Invalid request",
+      details: [{ field: "body", message: "Invalid JSON body" }],
+    },
+  });
+
+  const invalidBodyResponse = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "",
+        apiKey: "",
+      }),
+    })
+  );
+
+  assert.equal(invalidBodyResponse.status, 400);
+  const invalidBodyPayload = await invalidBodyResponse.json();
+  assert.equal(invalidBodyPayload.error.message, "Invalid request");
+  assert.equal(invalidBodyPayload.error.details.length >= 2, true);
+});
+
+test("provider-nodes validate route validates anthropic compatible providers against the models endpoint", async () => {
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({ url, init });
+    return new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const response = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "https://proxy.example.com/v1/messages?beta=true",
+        apiKey: "sk-anthropic-test",
+        type: "anthropic-compatible",
+        modelsPath: "/catalog",
+      }),
+    })
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    valid: true,
+    error: null,
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "https://proxy.example.com/v1/catalog");
+  assert.equal(calls[0].init.method, "GET");
+  assert.equal(calls[0].init.headers["x-api-key"], "sk-anthropic-test");
+  assert.equal(calls[0].init.headers["anthropic-version"], "2023-06-01");
+  assert.equal(calls[0].init.headers.Authorization, "Bearer sk-anthropic-test");
+});
+
+test("provider-nodes validate route supports enabled CC validation and OpenAI-style failures", async () => {
+  process.env.ENABLE_CC_COMPATIBLE_PROVIDER = "true";
+
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({ url, init });
+    if (calls.length === 1) {
+      return new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const ccResponse = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "https://proxy.example.com/v1/messages?beta=true",
+        apiKey: "sk-cc-test",
+        type: "anthropic-compatible",
+        compatMode: "cc",
+        chatPath: CLAUDE_CODE_COMPATIBLE_DEFAULT_CHAT_PATH,
+      }),
+    })
+  );
+
+  assert.equal(ccResponse.status, 200);
+  assert.deepEqual(await ccResponse.json(), {
+    valid: true,
+    error: null,
+    warning: null,
+    method: "models_endpoint",
+  });
+  assert.equal(String(calls[0].url).includes("/v1/messages"), false);
+  assert.equal(calls[0].init.method, "GET");
+
+  const openAiResponse = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "https://proxy.example.com/",
+        apiKey: "sk-openai-test",
+      }),
+    })
+  );
+
+  assert.equal(openAiResponse.status, 200);
+  assert.deepEqual(await openAiResponse.json(), {
+    valid: false,
+    error: "Invalid API key",
+  });
+  assert.equal(calls[1].url, "https://proxy.example.com/models");
+  assert.equal(calls[1].init.headers.Authorization, "Bearer sk-openai-test");
+});
+
+test("provider-nodes validate route covers default CC paths, null method, anthropic failures, and OpenAI success", async () => {
+  process.env.ENABLE_CC_COMPATIBLE_PROVIDER = "true";
+
+  const ccCalls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    ccCalls.push({ url, init });
+    if (ccCalls.length === 1) {
+      throw new Error("models unavailable");
+    }
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const ccResponse = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "https://proxy.example.com/v1/messages",
+        apiKey: "sk-cc-invalid",
+        type: "anthropic-compatible",
+        compatMode: "cc",
+      }),
+    })
+  );
+
+  assert.equal(ccResponse.status, 200);
+  assert.deepEqual(await ccResponse.json(), {
+    valid: false,
+    error: "Invalid API key",
+    warning: null,
+    method: null,
+  });
+  assert.equal(
+    ccCalls[0].url,
+    `https://proxy.example.com${CLAUDE_CODE_COMPATIBLE_DEFAULT_MODELS_PATH}`
+  );
+  assert.equal(
+    ccCalls[1].url,
+    `https://proxy.example.com${CLAUDE_CODE_COMPATIBLE_DEFAULT_CHAT_PATH}`
+  );
+  assert.equal(ccCalls[1].init.method, "POST");
+
+  const anthropicCalls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    anthropicCalls.push({ url, init });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const anthropicResponse = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "https://proxy.example.com/v1/messages",
+        apiKey: "sk-anthropic-invalid",
+        type: "anthropic-compatible",
+      }),
+    })
+  );
+
+  assert.equal(anthropicResponse.status, 200);
+  assert.deepEqual(await anthropicResponse.json(), {
+    valid: false,
+    error: "Invalid API key",
+  });
+  assert.equal(anthropicCalls[0].url, "https://proxy.example.com/v1/models");
+  assert.equal(anthropicCalls[0].init.method, "GET");
+
+  const openAiCalls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    openAiCalls.push({ url, init });
+    return new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const openAiResponse = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "https://proxy.example.com/",
+        apiKey: "sk-openai-valid",
+      }),
+    })
+  );
+
+  assert.equal(openAiResponse.status, 200);
+  assert.deepEqual(await openAiResponse.json(), {
+    valid: true,
+    error: null,
+  });
+  assert.equal(openAiCalls[0].url, "https://proxy.example.com/models");
+  assert.equal(openAiCalls[0].init.headers.Authorization, "Bearer sk-openai-valid");
+});
+
+test("provider-nodes validate route reports unexpected upstream failures", async () => {
+  globalThis.fetch = async () => {
+    throw new Error("boom");
+  };
+
+  const response = await providerNodesValidateRoute.POST(
+    new Request("http://localhost/api/provider-nodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseUrl: "https://proxy.example.com",
+        apiKey: "sk-openai-test",
+      }),
+    })
+  );
+
+  assert.equal(response.status, 500);
+  assert.deepEqual(await response.json(), {
+    error: "Validation failed",
+  });
 });
 
 test("provider-nodes list route exposes CC flag state from server env", async () => {

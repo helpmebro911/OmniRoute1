@@ -18,6 +18,8 @@ import {
   normalizeHiddenSidebarItems,
 } from "@/shared/constants/sidebarVisibility";
 
+const isE2EMode = process.env.NEXT_PUBLIC_OMNIROUTE_E2E_MODE === "1";
+
 export default function Sidebar({
   onClose,
   collapsed = false,
@@ -295,7 +297,7 @@ export default function Sidebar({
           })}
         </nav>
 
-        <CloudSyncStatus collapsed={collapsed} />
+        {!isE2EMode && <CloudSyncStatus collapsed={collapsed} />}
 
         <div
           className={cn(
