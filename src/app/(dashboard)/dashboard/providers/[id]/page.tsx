@@ -4567,6 +4567,7 @@ function AddApiKeyModal({
           apiKey: formData.apiKey,
           validationModelId: formData.validationModelId || undefined,
           customUserAgent: formData.customUserAgent.trim() || undefined,
+          baseUrl: formData.baseUrl.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -4606,6 +4607,7 @@ function AddApiKeyModal({
             apiKey: formData.apiKey,
             validationModelId: formData.validationModelId || undefined,
             customUserAgent: formData.customUserAgent.trim() || undefined,
+            baseUrl: formData.baseUrl.trim() || undefined,
           }),
         });
         const data = await res.json();
@@ -4943,6 +4945,7 @@ function EditConnectionModal({ isOpen, connection, onSave, onClose }: EditConnec
           apiKey: formData.apiKey,
           validationModelId: formData.validationModelId || undefined,
           customUserAgent: formData.customUserAgent.trim() || undefined,
+          baseUrl: formData.baseUrl.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -4989,6 +4992,7 @@ function EditConnectionModal({ isOpen, connection, onSave, onClose }: EditConnec
                 apiKey: formData.apiKey,
                 validationModelId: formData.validationModelId || undefined,
                 customUserAgent: formData.customUserAgent.trim() || undefined,
+                baseUrl: formData.baseUrl.trim() || undefined,
               }),
             });
             const data = await res.json();
