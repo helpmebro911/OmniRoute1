@@ -6,9 +6,13 @@
 
 ## [3.6.1] — 2026-04-10
 
-### 🔧 Maintenance
+### ✨ New Features
 
-- Version bump for upcoming changes
+- **OAuth Env Repair Action:** Added a "Repair env" button to the OAuth Providers dashboard that detects and restores missing OAuth client IDs from `.env.example` — with timestamped backup and append-only safety. Includes full 33-language i18n support and sanitized API responses (#1116, by @yart)
+
+### 🐛 Bug Fixes
+
+- **i18n: Missing Provider Keys:** Added missing `filterModels`, `modelsActive`, `showModel`, `hideModel` keys across all 32 locale files, fixing runtime `MISSING_MESSAGE` errors in the providers UI. Also cleaned up duplicate keys in `en.json` (#1111, by @rilham97)
 
 ---
 
