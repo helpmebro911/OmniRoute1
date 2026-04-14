@@ -11,7 +11,7 @@
 -- 3. Recreate memory_fts triggers to use memory_id (not UUID id) as rowid
 -- 4. Repopulate FTS5 so JOIN on memory_id works correctly
 
-BEGIN TRANSACTION;
+
 
 -- Step 1: Add memory_id column (will hold SQLite rowid as INTEGER)
 ALTER TABLE memories ADD COLUMN memory_id INTEGER;
@@ -52,4 +52,4 @@ END;
 -- Step 7: Repopulate FTS5 with correct memory_id values
 INSERT INTO memory_fts(rowid, content, key) SELECT memory_id, content, key FROM memories;
 
-COMMIT;
+
