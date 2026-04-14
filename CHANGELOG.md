@@ -4,6 +4,15 @@
 
 ---
 
+## [3.6.6] — 2026-04-14
+
+### 🐛 Bug Fixes
+
+- **Streaming `\n\n` Artifact Fix (#1211):** Changed `<omniModel>` tag-stripping regex from `?` to `*` quantifier across `combo.ts`, `comboAgentMiddleware.ts`, and `contextHandoff.ts` to greedily strip all accumulated JSON-escaped newline sequences surrounding the tag. This prevents literal `\n\n` prefix artifacts from appearing in consumer streaming responses
+- **E2E Combo Test Locator:** Fixed Playwright strict-mode violation in `combo-unification.spec.ts` by replacing ambiguous `getByRole` locator with a compound filter locator for the "All" strategy tab
+
+---
+
 ## [3.6.5] — 2026-04-13
 
 ### ✨ New Features
