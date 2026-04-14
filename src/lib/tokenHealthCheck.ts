@@ -186,12 +186,20 @@ async function sweep() {
 
     if (!connections || connections.length === 0) return;
 
-    for (const conn of connections) {
+    const staggerMs = parseInt(process.env.HEALTHCHECK_STAGGER_MS || "3000", 10);
+
+    for (let i = 0; i < connections.length; i++) {
+      const conn = connections[i];
       try {
         await checkConnection(conn);
       } catch (err) {
         // Per-connection isolation: one failure never blocks others
         logError(`${LOG_PREFIX} Error checking ${conn.name || conn.id}:`, err.message);
+      }
+
+      // Stagger delay between checks to prevent bursting (Issue #1220)
+      if (staggerMs > 0 && i < connections.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, staggerMs));
       }
     }
   } catch (err) {

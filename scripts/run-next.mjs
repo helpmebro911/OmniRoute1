@@ -1,11 +1,24 @@
 #!/usr/bin/env node
 
+import fs from "fs";
+import path from "path";
 import {
   resolveRuntimePorts,
   withRuntimePortEnv,
   spawnWithForwardedSignals,
 } from "./runtime-env.mjs";
 import { bootstrapEnv } from "./bootstrap-env.mjs";
+
+// Add check for conflicting app/ directory (Issue #1206)
+const rootAppDir = path.join(process.cwd(), "app");
+if (fs.existsSync(rootAppDir) && fs.statSync(rootAppDir).isDirectory()) {
+  console.error("\x1b[31m[FATAL ERROR]\x1b[0m Next.js App Router conflict detected!");
+  console.error(`A root-level 'app/' directory was found at: ${rootAppDir}`);
+  console.error("This conflicts with the 'src/app/' directory on Windows environments.");
+  console.error("Next.js will serve 404s for all pages because it prefers the root 'app/' folder.");
+  console.error("Please rename or delete the root 'app/' directory before starting OmniRoute.\n");
+  process.exit(1);
+}
 
 const mode = process.argv[2] === "start" ? "start" : "dev";
 
