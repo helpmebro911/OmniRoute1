@@ -62,6 +62,21 @@ export const OAUTH_PROVIDERS = {
   },
 };
 
+// Web / Cookie Providers
+export const WEB_COOKIE_PROVIDERS = {
+  "grok-web": {
+    id: "grok-web",
+    alias: "gw",
+    name: "Grok Web (Subscription)",
+    icon: "auto_awesome",
+    color: "#1DA1F2",
+    textIcon: "GW",
+    website: "https://grok.com",
+    authHint: "Paste your sso= cookie value from grok.com",
+    passthroughModels: true,
+  },
+};
+
 // API Key Providers
 export const APIKEY_PROVIDERS = {
   openrouter: {
@@ -242,16 +257,6 @@ export const APIKEY_PROVIDERS = {
     textIcon: "PP",
     website: "https://www.perplexity.ai",
   },
-  "perplexity-web": {
-    id: "perplexity-web",
-    alias: "pplx-web",
-    name: "Perplexity Web (Session)",
-    icon: "search",
-    color: "#20808D",
-    textIcon: "PW",
-    website: "https://www.perplexity.ai",
-    authHint: "Paste your __Secure-next-auth.session-token cookie value from perplexity.ai",
-  },
   together: {
     id: "together",
     alias: "together",
@@ -331,24 +336,6 @@ export const APIKEY_PROVIDERS = {
     textIcon: "HY",
     website: "https://hyperbolic.xyz",
   },
-  deepgram: {
-    id: "deepgram",
-    alias: "dg",
-    name: "Deepgram",
-    icon: "mic",
-    color: "#13EF93",
-    textIcon: "DG",
-    website: "https://deepgram.com",
-  },
-  assemblyai: {
-    id: "assemblyai",
-    alias: "aai",
-    name: "AssemblyAI",
-    icon: "record_voice_over",
-    color: "#0062FF",
-    textIcon: "AA",
-    website: "https://assemblyai.com",
-  },
   nanobanana: {
     id: "nanobanana",
     alias: "nb",
@@ -366,42 +353,6 @@ export const APIKEY_PROVIDERS = {
     color: "#58A6FF",
     textIcon: "OC",
     website: "https://ollama.com/settings/api-keys",
-  },
-  elevenlabs: {
-    id: "elevenlabs",
-    alias: "el",
-    name: "ElevenLabs",
-    icon: "record_voice_over",
-    color: "#6C47FF",
-    textIcon: "EL",
-    website: "https://elevenlabs.io",
-  },
-  cartesia: {
-    id: "cartesia",
-    alias: "cartesia",
-    name: "Cartesia",
-    icon: "spatial_audio",
-    color: "#FF4F8B",
-    textIcon: "CA",
-    website: "https://cartesia.ai",
-  },
-  playht: {
-    id: "playht",
-    alias: "playht",
-    name: "PlayHT",
-    icon: "play_circle",
-    color: "#00B4D8",
-    textIcon: "PH",
-    website: "https://play.ht",
-  },
-  inworld: {
-    id: "inworld",
-    alias: "inworld",
-    name: "Inworld",
-    icon: "voice_chat",
-    color: "#7B2EF2",
-    textIcon: "IW",
-    website: "https://inworld.ai",
   },
   sdwebui: {
     id: "sdwebui",
@@ -471,56 +422,6 @@ export const APIKEY_PROVIDERS = {
     textIcon: "ZA",
     website: "https://open.bigmodel.cn",
     apiHint: "API key from https://open.bigmodel.cn/usercenter/apikeys",
-  },
-  "perplexity-search": {
-    id: "perplexity-search",
-    alias: "pplx-search",
-    name: "Perplexity Search",
-    icon: "search",
-    color: "#20808D",
-    textIcon: "PS",
-    website: "https://docs.perplexity.ai/guides/search-quickstart",
-    authHint: "Same API key as Perplexity (pplx-...)",
-  },
-  "serper-search": {
-    id: "serper-search",
-    alias: "serper-search",
-    name: "Serper Search",
-    icon: "search",
-    color: "#4285F4",
-    textIcon: "SP",
-    website: "https://serper.dev",
-    authHint: "API key from serper.dev dashboard",
-  },
-  "brave-search": {
-    id: "brave-search",
-    alias: "brave-search",
-    name: "Brave Search",
-    icon: "travel_explore",
-    color: "#FB542B",
-    textIcon: "BR",
-    website: "https://brave.com/search/api",
-    authHint: "Subscription token from Brave Search API dashboard",
-  },
-  "exa-search": {
-    id: "exa-search",
-    alias: "exa-search",
-    name: "Exa Search",
-    icon: "neurology",
-    color: "#1E40AF",
-    textIcon: "EX",
-    website: "https://exa.ai",
-    authHint: "API key from dashboard.exa.ai",
-  },
-  "tavily-search": {
-    id: "tavily-search",
-    alias: "tavily-search",
-    name: "Tavily Search",
-    icon: "manage_search",
-    color: "#5B4FDB",
-    textIcon: "TV",
-    website: "https://tavily.com",
-    authHint: "API key from app.tavily.com (format: tvly-...)",
   },
   "opencode-zen": {
     id: "opencode-zen",
@@ -952,6 +853,118 @@ export const APIKEY_PROVIDERS = {
   },
 };
 
+// Search Providers
+export const SEARCH_PROVIDERS = {
+  "perplexity-search": {
+    id: "perplexity-search",
+    alias: "pplx-search",
+    name: "Perplexity Search",
+    icon: "search",
+    color: "#20808D",
+    textIcon: "PS",
+    website: "https://docs.perplexity.ai/guides/search-quickstart",
+    authHint: "Same API key as Perplexity (pplx-...)",
+  },
+  "serper-search": {
+    id: "serper-search",
+    alias: "serper-search",
+    name: "Serper Search",
+    icon: "search",
+    color: "#4285F4",
+    textIcon: "SP",
+    website: "https://serper.dev",
+    authHint: "API key from serper.dev dashboard",
+  },
+  "brave-search": {
+    id: "brave-search",
+    alias: "brave-search",
+    name: "Brave Search",
+    icon: "travel_explore",
+    color: "#FB542B",
+    textIcon: "BR",
+    website: "https://brave.com/search/api",
+    authHint: "Subscription token from Brave Search API dashboard",
+  },
+  "exa-search": {
+    id: "exa-search",
+    alias: "exa-search",
+    name: "Exa Search",
+    icon: "neurology",
+    color: "#1E40AF",
+    textIcon: "EX",
+    website: "https://exa.ai",
+    authHint: "API key from dashboard.exa.ai",
+  },
+  "tavily-search": {
+    id: "tavily-search",
+    alias: "tavily-search",
+    name: "Tavily Search",
+    icon: "manage_search",
+    color: "#5B4FDB",
+    textIcon: "TV",
+    website: "https://tavily.com",
+    authHint: "API key from app.tavily.com (format: tvly-...)",
+  },
+};
+
+// Audio Only Providers
+export const AUDIO_ONLY_PROVIDERS = {
+  deepgram: {
+    id: "deepgram",
+    alias: "dg",
+    name: "Deepgram",
+    icon: "mic",
+    color: "#13EF93",
+    textIcon: "DG",
+    website: "https://deepgram.com",
+  },
+  assemblyai: {
+    id: "assemblyai",
+    alias: "aai",
+    name: "AssemblyAI",
+    icon: "record_voice_over",
+    color: "#0062FF",
+    textIcon: "AA",
+    website: "https://assemblyai.com",
+  },
+  elevenlabs: {
+    id: "elevenlabs",
+    alias: "el",
+    name: "ElevenLabs",
+    icon: "record_voice_over",
+    color: "#6C47FF",
+    textIcon: "EL",
+    website: "https://elevenlabs.io",
+  },
+  cartesia: {
+    id: "cartesia",
+    alias: "cartesia",
+    name: "Cartesia",
+    icon: "spatial_audio",
+    color: "#FF4F8B",
+    textIcon: "CA",
+    website: "https://cartesia.ai",
+  },
+  playht: {
+    id: "playht",
+    alias: "playht",
+    name: "PlayHT",
+    icon: "play_circle",
+    color: "#00B4D8",
+    textIcon: "PH",
+    website: "https://play.ht",
+  },
+  inworld: {
+    id: "inworld",
+    alias: "inworld",
+    name: "Inworld",
+    icon: "voice_chat",
+    color: "#7B2EF2",
+    textIcon: "IW",
+    website: "https://inworld.ai",
+  },
+};
+
 export const OPENAI_COMPATIBLE_PREFIX = "openai-compatible-";
 export const ANTHROPIC_COMPATIBLE_PREFIX = "anthropic-compatible-";
 export const CLAUDE_CODE_COMPATIBLE_PREFIX = "anthropic-compatible-cc-";
@@ -991,6 +1004,9 @@ export const AI_PROVIDERS = {
   ...FREE_PROVIDERS,
   ...OAUTH_PROVIDERS,
   ...APIKEY_PROVIDERS,
+  ...WEB_COOKIE_PROVIDERS,
+  ...SEARCH_PROVIDERS,
+  ...AUDIO_ONLY_PROVIDERS,
   ...UPSTREAM_PROXY_PROVIDERS,
 };
 
@@ -1053,3 +1069,6 @@ import { validateProviders } from "../validation/providerSchema";
 validateProviders(FREE_PROVIDERS, "FREE_PROVIDERS");
 validateProviders(OAUTH_PROVIDERS, "OAUTH_PROVIDERS");
 validateProviders(APIKEY_PROVIDERS, "APIKEY_PROVIDERS");
+validateProviders(WEB_COOKIE_PROVIDERS, "WEB_COOKIE_PROVIDERS");
+validateProviders(SEARCH_PROVIDERS, "SEARCH_PROVIDERS");
+validateProviders(AUDIO_ONLY_PROVIDERS, "AUDIO_ONLY_PROVIDERS");

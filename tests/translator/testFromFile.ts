@@ -45,7 +45,7 @@ if (!fs.existsSync(fullPath)) {
 let data;
 try {
   data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
-} catch (err) {
+} catch (err: any) {
   console.error(`❌ Failed to parse JSON: ${err.message}`);
   process.exit(1);
 }
@@ -110,7 +110,8 @@ console.log(`  Stream: ${body.stream || false}`);
     if (isStreaming) {
       console.log("\n📡 Streaming response...\n");
 
-      const reader = response.body.getReader();
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
       const decoder = new TextDecoder();
       let chunkCount = 0;
       let buffer = "";
@@ -121,7 +122,7 @@ console.log(`  Stream: ${body.stream || false}`);
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        buffer = lines.pop(); // Keep incomplete line in buffer
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
 
         for (const line of lines) {
           if (line.trim()) {
@@ -142,7 +143,7 @@ console.log(`  Stream: ${body.stream || false}`);
       console.log("\n📦 Response:");
       console.log(JSON.stringify(responseData, null, 2));
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("\n❌ Request failed:", err.message);
     if (process.env.DEBUG) {
       console.error(err.stack);

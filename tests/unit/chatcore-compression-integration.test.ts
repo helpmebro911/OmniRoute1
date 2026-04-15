@@ -95,7 +95,7 @@ test("chatCore integration: compression preserves message structure", async () =
   assert.ok(Array.isArray(result.body.messages), "Messages should remain an array");
   assert.ok(result.body.messages.length > 0, "Messages should not be empty");
 
-  const hasSystem = result.body.messages.some((m) => m.role === "system");
+  const hasSystem = result.body.messages.some((m: any) => m.role === "system");
   assert.ok(hasSystem, "System message should be preserved");
 
   const lastMessage = result.body.messages[result.body.messages.length - 1];
@@ -126,7 +126,7 @@ test("chatCore integration: compression handles tool messages", async () => {
 
   assert.ok(result.compressed, "Context should be compressed");
 
-  const toolMessage = result.body.messages.find((m) => m.role === "tool");
+  const toolMessage = result.body.messages.find((m: any) => m.role === "tool");
   assert.ok(toolMessage, "Tool message should exist");
   assert.ok(toolMessage.content.length < longToolOutput.length, "Tool message should be truncated");
   assert.ok(

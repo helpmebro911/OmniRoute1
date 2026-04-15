@@ -149,7 +149,6 @@ const KNOWN_PNGS = new Set([
   "glm",
   "glmt",
   "groq",
-  "iflow",
   "ironclaw",
   "kilo-gateway",
   "kilocode",

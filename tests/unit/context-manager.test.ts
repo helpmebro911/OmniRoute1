@@ -68,7 +68,7 @@ test("compressContext: Layer 1 — trims long tool messages", () => {
   // Use target limit that allows the truncated tool message (~1000 tokens) to survive
   const result = compressContext(body, { maxTokens: 2000, reserveTokens: 100 });
   assert.ok(result.compressed);
-  const toolMsg = result.body.messages.find((m) => m.role === "tool");
+  const toolMsg = result.body.messages.find((m: any) => m.role === "tool");
   assert.ok(toolMsg.content.length < longContent.length);
   assert.ok(toolMsg.content.includes("[truncated]"));
 });
@@ -97,9 +97,9 @@ test("compressContext: Layer 2 — compresses thinking in old messages", () => {
   };
   const result = compressContext(body, { maxTokens: 2000, reserveTokens: 500 });
   // First assistant should have thinking removed
-  const firstAssistant = result.body.messages.find((m) => m.role === "assistant");
+  const firstAssistant = result.body.messages.find((m: any) => m.role === "assistant");
   if (Array.isArray(firstAssistant.content)) {
-    const hasThinking = firstAssistant.content.some((b) => b.type === "thinking");
+    const hasThinking = firstAssistant.content.some((b: any) => b.type === "thinking");
     assert.equal(hasThinking, false);
   }
 });
@@ -230,7 +230,7 @@ test("Layer 3: preserves intact tool_use/tool_result pairs after compression", (
   const body = { model: "test", messages };
   const result = compressContext(body, { maxTokens: 50000, reserveTokens: 10000 });
   const toolMsg = result.body.messages.find(
-    (m) => m.role === "tool" && m.tool_call_id === "call_1"
+    (m: any) => m.role === "tool" && m.tool_call_id === "call_1"
   );
   assert.ok(toolMsg, "tool_result for call_1 should survive compression");
 });

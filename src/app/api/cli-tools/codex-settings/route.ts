@@ -233,7 +233,7 @@ export async function POST(request: Request) {
       name: "OmniRoute",
       base_url: normalizedBaseUrl,
       wire_api: wireApi || "chat",
-      env_key: "OMNIROUTE_API_KEY",
+      env_key: "OPENAI_API_KEY",
     };
     delete parsed._root.openai_base_url;
 

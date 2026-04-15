@@ -477,7 +477,7 @@ export function resolveNestedComboModels(combo, allCombos, visited = new Set(), 
   return resolved;
 }
 
-function selectWeightedTarget(targets: Array<{ weight: number }>) {
+function selectWeightedTarget<T extends { weight?: number }>(targets: T[]) {
   if (targets.length === 0) return null;
 
   const totalWeight = targets.reduce((sum, target) => sum + (target.weight || 0), 0);
@@ -867,7 +867,12 @@ function resolveWeightedTargets(combo, allCombos) {
   };
 }
 
-function scoreAutoTargets(targets, candidates, taskType, weights) {
+function scoreAutoTargets(
+  targets: ResolvedComboTarget[],
+  candidates: ProviderCandidate[],
+  taskType: string | null,
+  weights: Record<string, number>
+) {
   const candidateByExecutionKey = new Map(
     candidates.map((candidate) => [candidate.executionKey, candidate])
   );
@@ -875,7 +880,12 @@ function scoreAutoTargets(targets, candidates, taskType, weights) {
     .map((target) => {
       const candidate = candidateByExecutionKey.get(target.executionKey);
       if (!candidate) return null;
-      const factors = calculateFactors(candidate, candidates, taskType, getTaskFitness);
+      const factors = calculateFactors(
+        candidate as ProviderCandidate,
+        candidates,
+        taskType,
+        getTaskFitness
+      );
       return {
         target,
         score: calculateScore(factors, weights),

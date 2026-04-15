@@ -40,7 +40,7 @@ const CHARS_PER_TOKEN = 4;
 /**
  * Estimate token count from text length
  */
-export function estimateTokens(text) {
+export function estimateTokens(text: string | object | null | undefined): number {
   if (!text) return 0;
   const str = typeof text === "string" ? text : JSON.stringify(text);
   return Math.ceil(str.length / CHARS_PER_TOKEN);
@@ -50,7 +50,7 @@ export function estimateTokens(text) {
  * Get token limit for a provider/model combination
  * Priority: Env override > models.dev DB > Registry defaultContextLength > DEFAULT_LIMITS
  */
-export function getTokenLimit(provider, model = null) {
+export function getTokenLimit(provider: string, model: string | null = null): number {
   // 1. Check environment variable override first
   const envOverride = getEnvOverride(provider);
   if (envOverride) return envOverride;
@@ -99,7 +99,7 @@ export function getTokenLimit(provider, model = null) {
  * @returns {{ body: object, compressed: boolean, stats: object }}
  */
 export function compressContext(
-  body,
+  body: Record<string, unknown>,
   options: { provider?: string; model?: string; maxTokens?: number; reserveTokens?: number } = {}
 ) {
   if (!body || !body.messages || !Array.isArray(body.messages)) {
@@ -160,7 +160,7 @@ export function compressContext(
 
 // ─── Layer 1: Trim Tool Messages ────────────────────────────────────────────
 
-function trimToolMessages(messages, maxChars) {
+function trimToolMessages(messages: Record<string, unknown>[], maxChars: number) {
   return messages.map((msg) => {
     if (msg.role === "tool" && typeof msg.content === "string" && msg.content.length > maxChars) {
       return {
@@ -190,7 +190,7 @@ function trimToolMessages(messages, maxChars) {
 
 // ─── Layer 2: Compress Thinking Blocks ──────────────────────────────────────
 
-function compressThinking(messages) {
+function compressThinking(messages: Record<string, unknown>[]) {
   // Find last assistant message index
   let lastAssistantIdx = -1;
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -228,7 +228,7 @@ function compressThinking(messages) {
 
 // ─── Layer 3: Aggressive Purification ───────────────────────────────────────
 
-function purifyHistory(messages, targetTokens) {
+function purifyHistory(messages: Record<string, unknown>[], targetTokens: number) {
   // Keep system message(s) and the last N message pairs
   const system = messages.filter((m) => m.role === "system" || m.role === "developer");
   const nonSystem = messages.filter((m) => m.role !== "system" && m.role !== "developer");
@@ -269,7 +269,7 @@ function purifyHistory(messages, targetTokens) {
  *   - OpenAI: "Invalid message format"
  *   - Gemini: "Function response without function call"
  */
-function fixToolPairs(messages) {
+function fixToolPairs(messages: Record<string, unknown>[]) {
   // Collect all tool_call IDs from assistant messages that remain
   const toolCallIds = new Set();
   for (const msg of messages) {
@@ -298,17 +298,13 @@ function fixToolPairs(messages) {
     if (msg.role === "user" && Array.isArray(msg.content)) {
       const hasOrphanedResult = msg.content.some(
         (block) =>
-          block.type === "tool_result" &&
-          block.tool_use_id &&
-          !toolCallIds.has(block.tool_use_id)
+          block.type === "tool_result" && block.tool_use_id && !toolCallIds.has(block.tool_use_id)
       );
       if (hasOrphanedResult) {
         // Filter out only the orphaned blocks, keep the rest
         const filtered = msg.content.filter(
           (block) =>
-            block.type !== "tool_result" ||
-            !block.tool_use_id ||
-            toolCallIds.has(block.tool_use_id)
+            block.type !== "tool_result" || !block.tool_use_id || toolCallIds.has(block.tool_use_id)
         );
         // If nothing left after filtering, drop the entire message
         return filtered.length > 0;
