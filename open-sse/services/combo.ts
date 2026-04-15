@@ -1270,6 +1270,11 @@ export async function handleComboChat({
             "COMBO",
             `[LKGP] Prioritizing last known good provider ${lkgpProvider} for combo "${combo.name}"`
           );
+        } else if (lkgpIndex === 0) {
+          log.debug(
+            "COMBO",
+            `[LKGP] Last known good provider ${lkgpProvider} already first for combo "${combo.name}"`
+          );
         }
       }
     } catch (err) {
