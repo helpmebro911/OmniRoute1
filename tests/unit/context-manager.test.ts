@@ -56,12 +56,17 @@ test("compressContext: Layer 1 — trims long tool messages", () => {
     model: "test",
     messages: [
       { role: "user", content: "run tool" },
+      {
+        role: "assistant",
+        content: null,
+        tool_calls: [{ id: "t1", type: "function", function: { name: "test_tool" } }],
+      },
       { role: "tool", content: longContent, tool_call_id: "t1" },
       { role: "user", content: "done?" },
     ],
   };
-  // Use very tight limit to force compression
-  const result = compressContext(body, { maxTokens: 500, reserveTokens: 100 });
+  // Use target limit that allows the truncated tool message (~1000 tokens) to survive
+  const result = compressContext(body, { maxTokens: 2000, reserveTokens: 100 });
   assert.ok(result.compressed);
   const toolMsg = result.body.messages.find((m) => m.role === "tool");
   assert.ok(toolMsg.content.length < longContent.length);
