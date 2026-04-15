@@ -236,13 +236,15 @@ function purifyHistory(messages, targetTokens) {
   // Binary search for how many messages to keep from the end
   let keep = nonSystem.length;
   while (keep > 2) {
-    const candidate = [...system, ...nonSystem.slice(-keep)];
+    let candidate = [...system, ...nonSystem.slice(-keep)];
+    candidate = fixToolPairs(candidate);
     const tokens = estimateTokens(JSON.stringify(candidate));
     if (tokens <= targetTokens) break;
     keep = Math.max(2, Math.floor(keep * 0.7)); // Drop 30% each iteration
   }
 
-  const result = [...system, ...nonSystem.slice(-keep)];
+  let result = [...system, ...nonSystem.slice(-keep)];
+  result = fixToolPairs(result);
 
   // Add summary of dropped messages
   if (keep < nonSystem.length) {
@@ -254,4 +256,64 @@ function purifyHistory(messages, targetTokens) {
   }
 
   return result;
+}
+
+/**
+ * Remove orphaned tool_result messages whose preceding tool_use was dropped.
+ * Also removes orphaned tool_use messages without a corresponding tool_result.
+ *
+ * When purifyHistory() drops oldest messages, it can split tool_use/tool_result
+ * pairs — keeping the tool_result but dropping the tool_use that initiated it.
+ * This causes upstream providers to reject the request with errors like:
+ *   - Claude: "tool_result message must be preceded by a tool_use message"
+ *   - OpenAI: "Invalid message format"
+ *   - Gemini: "Function response without function call"
+ */
+function fixToolPairs(messages) {
+  // Collect all tool_call IDs from assistant messages that remain
+  const toolCallIds = new Set();
+  for (const msg of messages) {
+    if (msg.role === "assistant" && Array.isArray(msg.tool_calls)) {
+      for (const tc of msg.tool_calls) {
+        if (tc.id) toolCallIds.add(tc.id);
+      }
+    }
+    // Claude format: content blocks with type=tool_use
+    if (msg.role === "assistant" && Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (block.type === "tool_use" && block.id) {
+          toolCallIds.add(block.id);
+        }
+      }
+    }
+  }
+
+  // Remove tool_result / "tool" role messages without a matching tool_use
+  return messages.filter((msg) => {
+    // OpenAI format: role="tool" with tool_call_id
+    if (msg.role === "tool" && msg.tool_call_id) {
+      return toolCallIds.has(msg.tool_call_id);
+    }
+    // Claude format: user message with tool_result content blocks
+    if (msg.role === "user" && Array.isArray(msg.content)) {
+      const hasOrphanedResult = msg.content.some(
+        (block) =>
+          block.type === "tool_result" &&
+          block.tool_use_id &&
+          !toolCallIds.has(block.tool_use_id)
+      );
+      if (hasOrphanedResult) {
+        // Filter out only the orphaned blocks, keep the rest
+        const filtered = msg.content.filter(
+          (block) =>
+            block.type !== "tool_result" ||
+            !block.tool_use_id ||
+            toolCallIds.has(block.tool_use_id)
+        );
+        // If nothing left after filtering, drop the entire message
+        return filtered.length > 0;
+      }
+    }
+    return true;
+  });
 }

@@ -111,6 +111,113 @@ test("compressContext: Layer 3 — drops old messages to fit", () => {
   const result = compressContext(body, { maxTokens: 3000, reserveTokens: 500 });
   assert.ok(result.compressed);
   assert.ok(result.body.messages.length < messages.length);
-  // System message preserved
   assert.equal(result.body.messages[0].role, "system");
+});
+
+// ─── fixToolPairs (Layer 3 tool pair integrity) ─────────────────────────────
+
+test("Layer 3: removes orphaned tool_result (OpenAI format) when tool_use is dropped", () => {
+  const messages = [
+    { role: "system", content: "system" },
+    ...Array.from({ length: 40 }, (_, i) => [
+      { role: "user", content: `User ${i}: ${"x".repeat(200)}` },
+      { role: "assistant", content: `Asst ${i}: ${"y".repeat(200)}` },
+    ]).flat(),
+    {
+      role: "assistant",
+      content: null,
+      tool_calls: [{ id: "call_kept", type: "function", function: { name: "read_file" } }],
+    },
+    { role: "tool", tool_call_id: "call_kept", content: "file contents" },
+    {
+      role: "assistant",
+      content: null,
+      tool_calls: [{ id: "call_dropped", type: "function", function: { name: "search" } }],
+    },
+    { role: "tool", tool_call_id: "call_dropped", content: "search results" },
+    { role: "user", content: "Summarize" },
+    { role: "assistant", content: "Here is the summary" },
+  ];
+  const body = { model: "test", messages };
+  const result = compressContext(body, { maxTokens: 800, reserveTokens: 200 });
+  assert.ok(result.compressed);
+
+  const toolCallIds = new Set();
+  for (const msg of result.body.messages) {
+    if (msg.role === "assistant" && Array.isArray(msg.tool_calls)) {
+      for (const tc of msg.tool_calls) toolCallIds.add(tc.id);
+    }
+  }
+  for (const msg of result.body.messages) {
+    if (msg.role === "tool" && msg.tool_call_id) {
+      assert.ok(toolCallIds.has(msg.tool_call_id), `tool_result "${msg.tool_call_id}" has no matching tool_use`);
+    }
+  }
+});
+
+test("Layer 3: removes orphaned tool_result (Claude format) when tool_use is dropped", () => {
+  const messages = [
+    { role: "system", content: "system" },
+    ...Array.from({ length: 40 }, (_, i) => [
+      { role: "user", content: `User ${i}: ${"x".repeat(200)}` },
+      { role: "assistant", content: `Asst ${i}: ${"y".repeat(200)}` },
+    ]).flat(),
+    {
+      role: "assistant",
+      content: [{ type: "tool_use", id: "toolu_kept", name: "read", input: {} }],
+    },
+    {
+      role: "user",
+      content: [{ type: "tool_result", tool_use_id: "toolu_kept", content: "file" }],
+    },
+    {
+      role: "assistant",
+      content: [{ type: "tool_use", id: "toolu_orphaned", name: "search", input: {} }],
+    },
+    {
+      role: "user",
+      content: [{ type: "tool_result", tool_use_id: "toolu_orphaned", content: "results" }],
+    },
+    { role: "user", content: "Final question" },
+  ];
+  const body = { model: "test", messages };
+  const result = compressContext(body, { maxTokens: 800, reserveTokens: 200 });
+  assert.ok(result.compressed);
+
+  const toolUseIds = new Set();
+  for (const msg of result.body.messages) {
+    if (msg.role === "assistant" && Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (block.type === "tool_use" && block.id) toolUseIds.add(block.id);
+      }
+    }
+  }
+  for (const msg of result.body.messages) {
+    if (msg.role === "user" && Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (block.type === "tool_result" && block.tool_use_id) {
+          assert.ok(toolUseIds.has(block.tool_use_id), `Claude tool_result "${block.tool_use_id}" has no matching tool_use`);
+        }
+      }
+    }
+  }
+});
+
+test("Layer 3: preserves intact tool_use/tool_result pairs after compression", () => {
+  const messages = [
+    { role: "system", content: "system" },
+    { role: "user", content: "Read file" },
+    {
+      role: "assistant",
+      content: null,
+      tool_calls: [{ id: "call_1", type: "function", function: { name: "read" } }],
+    },
+    { role: "tool", tool_call_id: "call_1", content: "file data" },
+    { role: "user", content: "What does it say?" },
+    { role: "assistant", content: "It says hello" },
+  ];
+  const body = { model: "test", messages };
+  const result = compressContext(body, { maxTokens: 50000, reserveTokens: 10000 });
+  const toolMsg = result.body.messages.find((m) => m.role === "tool" && m.tool_call_id === "call_1");
+  assert.ok(toolMsg, "tool_result for call_1 should survive compression");
 });
