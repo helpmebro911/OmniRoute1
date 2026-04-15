@@ -3,12 +3,8 @@ import assert from "node:assert/strict";
 
 // ─── Import the executor and its dependencies ──────────────────────────────
 
-const { PerplexityWebExecutor } = await import(
-  "../../open-sse/executors/perplexity-web.ts"
-);
-const { getExecutor, hasSpecializedExecutor } = await import(
-  "../../open-sse/executors/index.ts"
-);
+const { PerplexityWebExecutor } = await import("../../open-sse/executors/perplexity-web.ts");
+const { getExecutor, hasSpecializedExecutor } = await import("../../open-sse/executors/index.ts");
 
 // ─── Helper: Build a mock SSE stream from Perplexity events ─────────────────
 
@@ -195,10 +191,7 @@ test("Streaming: produces valid SSE chunks", async () => {
     });
 
     assert.equal(result.response.status, 200);
-    assert.equal(
-      result.response.headers.get("Content-Type"),
-      "text/event-stream",
-    );
+    assert.equal(result.response.headers.get("Content-Type"), "text/event-stream");
 
     // Read all SSE chunks
     const text = await result.response.text();
@@ -268,7 +261,9 @@ test("Streaming: thinking content emitted as reasoning_content", async () => {
     });
 
     const text = await result.response.text();
-    const dataLines = text.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]");
+    const dataLines = text
+      .split("\n")
+      .filter((l) => l.startsWith("data: ") && l !== "data: [DONE]");
 
     // Should have a reasoning_content delta
     const hasReasoning = dataLines.some((l) => {
@@ -421,7 +416,7 @@ test("Message parsing: system + user + assistant history", async () => {
           status: "COMPLETED",
         },
       ]),
-      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      { status: 200, headers: { "Content-Type": "text/event-stream" } }
     );
   };
 
@@ -472,7 +467,7 @@ test("Message parsing: developer role treated as system", async () => {
           status: "COMPLETED",
         },
       ]),
-      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      { status: 200, headers: { "Content-Type": "text/event-stream" } }
     );
   };
 
@@ -519,7 +514,7 @@ test("Auth: cookie-based auth sends Cookie header", async () => {
           status: "COMPLETED",
         },
       ]),
-      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      { status: 200, headers: { "Content-Type": "text/event-stream" } }
     );
   };
 
@@ -536,9 +531,12 @@ test("Auth: cookie-based auth sends Cookie header", async () => {
 
     assert.equal(
       capturedHeaders["Cookie"],
-      "__Secure-next-auth.session-token=my-session-token-value",
+      "__Secure-next-auth.session-token=my-session-token-value"
     );
-    assert.ok(!capturedHeaders["Authorization"], "Should not have Authorization header for cookie auth");
+    assert.ok(
+      !capturedHeaders["Authorization"],
+      "Should not have Authorization header for cookie auth"
+    );
   } finally {
     globalThis.fetch = original;
   }
@@ -561,7 +559,7 @@ test("Auth: JWT auth sends Authorization Bearer header", async () => {
           status: "COMPLETED",
         },
       ]),
-      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      { status: 200, headers: { "Content-Type": "text/event-stream" } }
     );
   };
 
@@ -602,7 +600,7 @@ test("Model mapping: pplx-gpt sends correct internal preference", async () => {
           status: "COMPLETED",
         },
       ]),
-      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      { status: 200, headers: { "Content-Type": "text/event-stream" } }
     );
   };
 
@@ -641,7 +639,7 @@ test("Model mapping: thinking mode uses thinking variant", async () => {
           status: "COMPLETED",
         },
       ]),
-      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      { status: 200, headers: { "Content-Type": "text/event-stream" } }
     );
   };
 
@@ -669,9 +667,7 @@ test("Model mapping: thinking mode uses thinking variant", async () => {
 // ─── Test: Provider registry ────────────────────────────────────────────────
 
 test("Provider registry: perplexity-web is registered with correct models", async () => {
-  const { PROVIDER_MODELS } = await import(
-    "../../open-sse/config/providerModels.ts"
-  );
+  const { PROVIDER_MODELS } = await import("../../open-sse/config/providerModels.ts");
 
   const models = PROVIDER_MODELS["pplx-web"];
   assert.ok(models, "pplx-web should be in PROVIDER_MODELS");
@@ -690,9 +686,7 @@ test("Provider registry: perplexity-web is registered with correct models", asyn
 // ─── Test: Fallback text field ──────────────────────────────────────────────
 
 test("Non-streaming: falls back to text field when no blocks", async () => {
-  const pplxEvents = [
-    { text: "Fallback answer text", status: "COMPLETED", final: true },
-  ];
+  const pplxEvents = [{ text: "Fallback answer text", status: "COMPLETED", final: true }];
 
   const restore = mockFetch(200, pplxEvents);
   try {
@@ -725,11 +719,13 @@ test("Request: posts to correct Perplexity SSE endpoint", async () => {
     return new Response(
       mockPplxStream([
         {
-          blocks: [{ intended_usage: "markdown", markdown_block: { chunks: ["ok"], progress: "DONE" } }],
+          blocks: [
+            { intended_usage: "markdown", markdown_block: { chunks: ["ok"], progress: "DONE" } },
+          ],
           status: "COMPLETED",
         },
       ]),
-      { status: 200, headers: { "Content-Type": "text/event-stream" } },
+      { status: 200, headers: { "Content-Type": "text/event-stream" } }
     );
   };
 
