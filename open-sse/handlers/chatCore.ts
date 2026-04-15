@@ -968,10 +968,10 @@ export async function handleChatCore({
   let translatedBody = body;
   const isClaudePassthrough = sourceFormat === FORMATS.CLAUDE && targetFormat === FORMATS.CLAUDE;
   const isClaudeCodeCompatible = isClaudeCodeCompatibleProvider(provider);
-  // Respect the client's explicit non-streaming intent for CC-compatible providers.
-  // Most upstreams can answer JSON directly; the SSE->JSON fallback remains as a
-  // compatibility path when an upstream still responds with event-stream.
-  const upstreamStream = stream;
+  // CC-compatible providers are most reliable when OmniRoute always requests SSE
+  // upstream. If the client asked for JSON, chatCore will still collect the SSE
+  // response and return a non-streaming payload after the stream finishes.
+  const upstreamStream = isClaudeCodeCompatible ? true : stream;
   let ccSessionId: string | null = null;
 
   // Determine if we should preserve client-side cache_control headers
@@ -998,8 +998,10 @@ export async function handleChatCore({
     } else if (isClaudeCodeCompatible) {
       let normalizedForCc = { ...body };
 
-      // Claude Code-compatible providers expect Anthropic Messages-shaped payloads,
-      // but we extract only role/text/max_tokens/effort from an OpenAI-like view first.
+      // CC-compatible relays are optimized for gateway compatibility, not for
+      // lossless request preservation. Normalize through an OpenAI-like view,
+      // then rebuild a Claude Code-shaped payload that is more likely to pass
+      // upstream client fingerprint checks than a field-for-field passthrough.
       if (sourceFormat !== FORMATS.OPENAI) {
         const normalizeToolCallId = getModelNormalizeToolCallId(
           provider || "",

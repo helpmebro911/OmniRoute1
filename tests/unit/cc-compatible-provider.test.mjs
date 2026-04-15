@@ -460,7 +460,7 @@ test("validateProviderApiKey uses CC skeleton request after /models fallback", a
   assert.equal(calls[1].headers.Accept, "text/event-stream");
 });
 
-test("handleChatCore respects non-streaming upstream requests for CC compatible providers", async () => {
+test("handleChatCore forces SSE upstream for CC compatible providers while returning JSON to non-stream clients", async () => {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     calls.push({
@@ -535,8 +535,8 @@ test("handleChatCore respects non-streaming upstream requests for CC compatible 
 
   assert.equal(result.success, true);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].headers.Accept, "application/json");
-  assert.equal(calls[0].body.stream, undefined);
+  assert.equal(calls[0].headers.Accept, "text/event-stream");
+  assert.equal(calls[0].body.stream, true);
   assert.equal(JSON.stringify(calls[0].body).includes('"cache_control"'), false);
 
   const payload = await result.response.json();

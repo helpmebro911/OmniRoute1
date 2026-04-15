@@ -82,6 +82,22 @@ test("resolveComboConfig ignores null and undefined overrides", () => {
   assert.equal(result.strategy, "priority");
 });
 
+test("updateComboDefaultsSchema accepts arbitrarily large timeout defaults and provider overrides", () => {
+  const parsed = updateComboDefaultsSchema.parse({
+    comboDefaults: {
+      timeoutMs: 3600000,
+    },
+    providerOverrides: {
+      anthropic: {
+        timeoutMs: 5400000,
+      },
+    },
+  });
+
+  assert.equal(parsed.comboDefaults.timeoutMs, 3600000);
+  assert.equal(parsed.providerOverrides.anthropic.timeoutMs, 5400000);
+});
+
 test("resolveComboConfig preserves explicit empty handoffProviders overrides", () => {
   const result = resolveComboConfig(
     {
