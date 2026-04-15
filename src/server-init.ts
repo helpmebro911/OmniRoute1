@@ -49,7 +49,14 @@ async function startServer() {
     console.log("Server started with cloud sync initialized");
 
     // Log server start event to audit log
-    logAuditEvent({ action: "server.start", details: { timestamp: new Date().toISOString() } });
+    logAuditEvent({
+      action: "server.start",
+      actor: "system",
+      target: "server-runtime",
+      resourceType: "maintenance",
+      status: "success",
+      details: { timestamp: new Date().toISOString() },
+    });
   } catch (error) {
     console.error("[FATAL] Error initializing cloud sync:", error);
     process.exit(1);

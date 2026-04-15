@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 
-import fs from "fs";
-import path from "path";
-import {
-  resolveRuntimePorts,
-  withRuntimePortEnv,
-  spawnWithForwardedSignals,
-} from "./runtime-env.mjs";
+import fs from "node:fs";
+import http from "node:http";
+import path from "node:path";
+import next from "next";
 import { bootstrapEnv } from "./bootstrap-env.mjs";
+import { resolveRuntimePorts, withRuntimePortEnv } from "./runtime-env.mjs";
+import { createOmnirouteWsBridge } from "./v1-ws-bridge.mjs";
 
 // Add check for conflicting app/ directory (Issue #1206)
 const rootAppDir = path.join(process.cwd(), "app");
@@ -21,20 +20,82 @@ if (fs.existsSync(rootAppDir) && fs.statSync(rootAppDir).isDirectory()) {
 }
 
 const mode = process.argv[2] === "start" ? "start" : "dev";
+const dev = mode === "dev";
 
-// Load .env / server.env first so PORT / DASHBOARD_PORT from files affect --port below.
-const env = bootstrapEnv();
-const runtimePorts = resolveRuntimePorts(env);
-const { dashboardPort } = runtimePorts;
+const bootstrappedEnv = bootstrapEnv();
+const runtimePorts = resolveRuntimePorts(bootstrappedEnv);
+const mergedEnv = withRuntimePortEnv(bootstrappedEnv, runtimePorts);
 
-const args = ["./node_modules/next/dist/bin/next", mode, "--port", String(dashboardPort)];
-// Default: use webpack (stable). Set OMNIROUTE_USE_TURBOPACK=1 in .env for Turbopack (faster dev).
-// Must read merged `env` from bootstrap — .env is not applied to process.env in the launcher.
-if (mode === "dev" && env.OMNIROUTE_USE_TURBOPACK !== "1") {
-  args.splice(2, 0, "--webpack");
+for (const [key, value] of Object.entries(mergedEnv)) {
+  if (value !== undefined) {
+    process.env[key] = value;
+  }
 }
 
-spawnWithForwardedSignals(process.execPath, args, {
-  stdio: "inherit",
-  env: withRuntimePortEnv(env, runtimePorts),
+const { dashboardPort } = runtimePorts;
+const hostname = process.env.HOST || "0.0.0.0";
+const useTurbopack = dev && mergedEnv.OMNIROUTE_USE_TURBOPACK === "1";
+
+const nextApp = next({
+  dev,
+  dir: process.cwd(),
+  hostname,
+  port: dashboardPort,
+  turbopack: useTurbopack,
+  webpack: dev && !useTurbopack,
+});
+
+async function start() {
+  await nextApp.prepare();
+
+  const requestHandler = nextApp.getRequestHandler();
+  const upgradeHandler = nextApp.getUpgradeHandler();
+  const wsBridge = createOmnirouteWsBridge({
+    baseUrl: `http://127.0.0.1:${dashboardPort}`,
+  });
+
+  const server = http.createServer((req, res) => requestHandler(req, res));
+  server.on("upgrade", async (req, socket, head) => {
+    try {
+      const handled = await wsBridge.handleUpgrade(req, socket, head);
+      if (handled) return;
+      await upgradeHandler(req, socket, head);
+    } catch (error) {
+      if (!socket.destroyed) {
+        socket.destroy(error instanceof Error ? error : undefined);
+      }
+      console.error("[WS] Upgrade handling failed:", error);
+    }
+  });
+
+  server.on("error", (error) => {
+    console.error("[FATAL] Next custom server failed:", error);
+    process.exit(1);
+  });
+
+  const shutdown = async (signal) => {
+    try {
+      await new Promise((resolve) => server.close(resolve));
+      await nextApp.close();
+    } catch (error) {
+      console.error(`[SHUTDOWN] Failed during ${signal}:`, error);
+    } finally {
+      process.exit(0);
+    }
+  };
+
+  process.on("SIGINT", () => void shutdown("SIGINT"));
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+
+  server.listen(dashboardPort, hostname, () => {
+    const bundler = dev ? (useTurbopack ? "turbopack" : "webpack") : "production";
+    console.log(
+      `[Next] ${mode} server listening on http://${hostname}:${dashboardPort} (${bundler})`
+    );
+  });
+}
+
+start().catch((error) => {
+  console.error("[FATAL] Failed to start Next custom server:", error);
+  process.exit(1);
 });

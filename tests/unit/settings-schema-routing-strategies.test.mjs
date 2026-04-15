@@ -30,3 +30,11 @@ test("settings schemas accept cooldown-aware retry knobs", () => {
   assert.equal(sharedParsed.requestRetry, 3);
   assert.equal(sharedParsed.maxRetryIntervalSec, 30);
 });
+
+test("settings schemas accept wsAuth toggle", () => {
+  const routeParsed = settingsRouteSchema.parse({ wsAuth: true });
+  const sharedParsed = sharedSettingsSchema.parse({ wsAuth: false });
+
+  assert.equal(routeParsed.wsAuth, true);
+  assert.equal(sharedParsed.wsAuth, false);
+});

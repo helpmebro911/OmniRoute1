@@ -141,6 +141,10 @@ export const createKeySchema = z.object({
   noLog: z.boolean().optional(),
 });
 
+export const createSyncTokenSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(200),
+});
+
 // ──── Combo Schemas ────
 
 const comboStepMetaSchema = {
@@ -310,6 +314,7 @@ export const updateSettingsSchema = z.object({
   // Protocol toggles (default: disabled)
   mcpEnabled: z.boolean().optional(),
   a2aEnabled: z.boolean().optional(),
+  wsAuth: z.boolean().optional(),
 });
 
 // ──── Auth Schemas ────

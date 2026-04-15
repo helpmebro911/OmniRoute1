@@ -14,6 +14,7 @@ const PUBLIC_API_ROUTES = [
   "/api/monitoring/health",
   "/api/v1/",
   "/api/cloud/",
+  "/api/sync/bundle",
   "/api/oauth/",
 ];
 

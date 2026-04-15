@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import { getAuditRequestContext, logAuditEvent } from "@/lib/compliance/index";
+import {
+  getProviderAuditTarget,
+  summarizeProviderConnectionForAudit,
+} from "@/lib/compliance/providerAudit";
 import {
   getProviderConnectionById,
   updateProviderConnection,
@@ -64,6 +69,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 // PUT /api/providers/[id] - Update connection
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auditContext = getAuditRequestContext(request);
   let rawBody;
   try {
     rawBody = await request.json();
@@ -165,6 +171,22 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // Auto sync to Cloud if enabled
     await syncToCloudIfEnabled();
 
+    logAuditEvent({
+      action: "provider.credentials.updated",
+      actor: "admin",
+      target: getProviderAuditTarget(updated || existing),
+      resourceType: "provider_credentials",
+      status: "success",
+      ipAddress: auditContext.ipAddress || undefined,
+      requestId: auditContext.requestId,
+      metadata: {
+        provider: existing.provider,
+        changedFields: Object.keys(updateData),
+        before: summarizeProviderConnectionForAudit(existing),
+        after: summarizeProviderConnectionForAudit(updated),
+      },
+    });
+
     return NextResponse.json({ connection: result });
   } catch (error) {
     console.log("Error updating connection:", error);
@@ -174,6 +196,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 // DELETE /api/providers/[id] - Delete connection
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auditContext = getAuditRequestContext(request);
+
   try {
     const { id } = await params;
 
@@ -200,6 +224,20 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     // Auto sync to Cloud if enabled
     await syncToCloudIfEnabled();
+
+    logAuditEvent({
+      action: "provider.credentials.revoked",
+      actor: "admin",
+      target: getProviderAuditTarget(connection),
+      resourceType: "provider_credentials",
+      status: "success",
+      ipAddress: auditContext.ipAddress || undefined,
+      requestId: auditContext.requestId,
+      metadata: {
+        provider: connection.provider,
+        connection: summarizeProviderConnectionForAudit(connection),
+      },
+    });
 
     return NextResponse.json({ message: "Connection deleted successfully" });
   } catch (error) {

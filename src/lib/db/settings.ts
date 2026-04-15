@@ -51,6 +51,7 @@ export async function getSettings() {
     hiddenSidebarItems: [],
     alwaysPreserveClientCache: "auto",
     idempotencyWindowMs: 5000,
+    wsAuth: false,
   };
   for (const row of rows) {
     const record = toRecord(row);
