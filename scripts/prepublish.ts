@@ -372,6 +372,22 @@ if (existsSync(mcpSrcFile)) {
   }
 }
 
+// ── Step 8.7: Bundle CLI entrypoint ────────────────────────
+const cliSrcFile = join(ROOT, "bin", "omniroute.ts");
+const cliDestFile = join(ROOT, "bin", "omniroute.mjs");
+if (existsSync(cliSrcFile)) {
+  console.log("  🔨 Bundling CLI entrypoint (TypeScript → JavaScript)...");
+  try {
+    execSync(
+      `npx esbuild bin/omniroute.ts --bundle --platform=node --packages=external --format=esm --outfile=bin/omniroute.mjs`,
+      { cwd: ROOT, stdio: "inherit" }
+    );
+    console.log("  ✅ CLI bundled to bin/omniroute.mjs");
+  } catch (err: any) {
+    console.warn("  ⚠️  CLI bundle error:", err.message);
+  }
+}
+
 // ── Step 9: Copy shared utilities needed at runtime ────────
 const sharedApiKey = join(ROOT, "src", "shared", "utils", "apiKey.js");
 const sharedApiKeyDest = join(APP_DIR, "src", "shared", "utils");
