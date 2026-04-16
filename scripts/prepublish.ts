@@ -105,6 +105,22 @@ function removeEmptyDirectories(dir: string): boolean {
 
 console.log("🔨 OmniRoute — Building for npm publish...\n");
 
+// ── Step 0: Compile CLI binary for Node 22 compatibility ───
+const cliSrcFile = join(ROOT, "bin", "omniroute.ts");
+if (existsSync(cliSrcFile)) {
+  console.log("  🔨 Bundling CLI main entrypoint (TypeScript → JavaScript)...");
+  try {
+    execSync(
+      `npx esbuild bin/omniroute.ts --bundle --platform=node --packages=external --format=esm --outfile=bin/omniroute.mjs`,
+      { cwd: ROOT, stdio: "inherit" }
+    );
+    console.log("  ✅ CLI entrypoint bundled to bin/omniroute.mjs");
+  } catch (err: any) {
+    console.error("\n  ❌ CLI bundle error:", err.message);
+    process.exit(1);
+  }
+}
+
 // ── Step 1: Clean previous app/ directory ──────────────────
 if (existsSync(APP_DIR)) {
   console.log("  🧹 Cleaning previous app/ directory...");

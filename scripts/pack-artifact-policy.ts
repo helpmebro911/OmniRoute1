@@ -58,6 +58,7 @@ export const PACK_ARTIFACT_ROOT_ALLOWED_EXACT_PATHS: string[] = [
   "LICENSE",
   "README.md",
   "bin/mcp-server.mjs",
+  "bin/omniroute.mjs",
   "bin/omniroute.ts",
   "bin/reset-password.mjs",
   "open-sse/mcp-server/README.md",
@@ -85,6 +86,7 @@ export const PACK_ARTIFACT_ROOT_ALLOWED_PATH_PREFIXES: string[] = [
 export const PACK_ARTIFACT_REQUIRED_PATHS: string[] = [
   "app/server.js",
   "bin/mcp-server.mjs",
+  "bin/omniroute.mjs",
   "bin/omniroute.ts",
   "package.json",
   "scripts/native-binary-compat.mjs",
