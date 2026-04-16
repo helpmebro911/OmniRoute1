@@ -258,7 +258,7 @@ export async function handleChat(request: any, clientRawRequest: any = null) {
 
   // Check if model is a combo (has multiple models with fallback)
   telemetry.startPhase("resolve");
-  const combo = await getComboForModel(resolvedModelStr);
+  const combo: any = await getComboForModel(resolvedModelStr);
   if (combo) {
     log.info(
       "CHAT",
@@ -540,7 +540,7 @@ async function handleSingleModelChat(
         }
       );
 
-      if (!credentials || credentials.allRateLimited) {
+      if (!credentials || "allRateLimited" in credentials) {
         if ([408, 429, 500, 502, 503, 504].includes(Number(lastStatus))) {
           const quarantine = markModelAsProblematic(provider, model, {
             status: Number(lastStatus),

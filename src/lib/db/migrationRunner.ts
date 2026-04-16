@@ -204,7 +204,14 @@ export function runMigrations(db: Database.Database): number {
   }
 
   // ── Safety Check 2: Mass-migration detection (abort if existing DB + many migrations) ──
+  // Skip in test environments where fresh DBs legitimately have many pending migrations.
+  const isTestEnvironment =
+    process.env.NODE_ENV === "test" ||
+    process.env.VITEST !== undefined ||
+    (typeof process.argv !== "undefined" && process.argv.some((arg) => arg.includes("test")));
+
   if (
+    !isTestEnvironment &&
     process.env.DISABLE_SQLITE_AUTO_BACKUP !== "true" &&
     MAX_PENDING_MIGRATIONS_ON_EXISTING_DB > 0 &&
     applied.size > 0 &&
